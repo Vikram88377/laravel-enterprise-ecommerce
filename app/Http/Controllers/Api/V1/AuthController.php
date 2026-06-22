@@ -10,7 +10,7 @@ use App\Http\Requests\Auth\RegisterRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class AuthController extends Controller
+class AuthController extends BaseApiController
 {
     public function __construct(
         private AuthService $authService
@@ -24,17 +24,17 @@ class AuthController extends Controller
                 $request->validated()
             );
 
-            return response()->json([
-                'success' => true,
-                'message' => 'User registered successfully',
-                'data' => $result,
-            ], 201);
+                return $this->successResponse(
+                    $result,
+                    'User registered successfully',
+                    201
+                );
 
         } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 500);
+            return $this->errorResponse(
+                $e->getMessage(),
+                500
+            );
         }
     }
 

@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\CategoryController;
+
 
 Route::prefix('v1')->group(function () {
 
@@ -29,5 +31,11 @@ Route::prefix('v1')->group(function () {
                 '/logout',
                 [AuthController::class, 'logout']
             );
+
+
+    Route::get('/categories', [CategoryController::class, 'index']);
+    Route::post('/categories', [CategoryController::class, 'store']);
+
+
         });
 });
