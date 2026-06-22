@@ -7,6 +7,9 @@ use App\Interfaces\AuthRepositoryInterface;
 use App\Repositories\AuthRepository;
 use App\Repositories\CategoryRepository;
 use App\Interfaces\CategoryRepositoryInterface;
+use App\Interfaces\ProductRepositoryInterface;
+use App\Repositories\ProductRepository;
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +26,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
     CategoryRepositoryInterface::class,
     CategoryRepository::class
+);
+
+$this->app->bind(
+    ProductRepositoryInterface::class,
+    ProductRepository::class
 );
 
 
