@@ -5,7 +5,7 @@ namespace App\Repositories;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Interfaces\CartRepositoryInterface;
-
+use App\Models\Coupon;
 class CartRepository implements CartRepositoryInterface
 {
     public function getOrCreateCart(int $userId)
@@ -40,17 +40,15 @@ class CartRepository implements CartRepositoryInterface
         return $cartItem;
     }
 
-    public function getCartWithItems(int $userId)
-    {
-        return Cart::with([
-            'items.product.images'
-        ])
-        ->where(
-            'user_id',
-            $userId
-        )
-        ->first();
-    }
+            public function getCartWithItems(int $userId)
+            {
+                return Cart::with([
+                    'items.product.images',
+                    'coupon'
+                ])
+                ->where('user_id', $userId)
+                ->first();
+            }
 
     public function updateCartTotals(
         $cart,
@@ -82,6 +80,9 @@ public function clearCart($cart)
     return $cart;
 }
 
-
+        public function findCouponByCode(string $code)
+{
+    return Coupon::where('code', $code)->first();
+}
 
 }

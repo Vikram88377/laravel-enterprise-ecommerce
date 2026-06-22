@@ -17,6 +17,7 @@ class Cart extends Model
     'subtotal',
     'discount',
     'tax',
+    'coupon_id',
     'shipping_charge',
     'grand_total',
     'status',
@@ -34,5 +35,10 @@ public function items()
     return $this->hasMany(CartItem::class);
 }
 
+
+public function coupon()
+{
+    return $this->belongsTo(Coupon::class);
+}
 
 }

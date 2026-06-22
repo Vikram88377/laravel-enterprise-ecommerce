@@ -56,28 +56,56 @@ class CartService
         return $this->cartRepository->getCartWithItems($userId);
     }
 
-    private function recalculateCart($cart): void
-    {
-        $cart->load('items');
+                private function recalculateCart($cart): void
+                {
+                    $cart->load('items', 'coupon');
 
-        $subtotal = $cart->items->sum('total');
+                    $subtotal = $cart->items->sum('total');
 
-        $discount = 0;
+                    $discount = 0;
 
-        $tax = round($subtotal * 18 / 100, 2);
+                    if ($cart->coupon) {
 
-        $shippingCharge = $subtotal > 1000 ? 0 : 50;
+                        if ($cart->coupon->type === 'fixed') {
+                            $discount = $cart->coupon->value;
+                        }
 
-        $grandTotal = $subtotal + $tax + $shippingCharge - $discount;
+                        if ($cart->coupon->type === 'percentage') {
+                            $discount = ($subtotal * $cart->coupon->value) / 100;
 
-        $this->cartRepository->updateCartTotals($cart, [
-            'subtotal' => $subtotal,
-            'discount' => $discount,
-            'tax' => $tax,
-            'shipping_charge' => $shippingCharge,
-            'grand_total' => $grandTotal,
-        ]);
-    }
+                            if ($cart->coupon->max_discount) {
+                                $discount = min(
+                                    $discount,
+                                    $cart->coupon->max_discount
+                                );
+                            }
+                        }
+                    }
+
+                    $discount = min(
+                        $discount,
+                        $subtotal
+                    );
+
+                    $taxableAmount = $subtotal - $discount;
+
+                    $tax = round(
+                        ($taxableAmount * 18) / 100,
+                        2
+                    );
+
+                    $shippingCharge = $taxableAmount > 1000 ? 0 : 50;
+
+                    $grandTotal = $taxableAmount + $tax + $shippingCharge;
+
+                    $this->cartRepository->updateCartTotals($cart, [
+                        'subtotal' => $subtotal,
+                        'discount' => $discount,
+                        'tax' => $tax,
+                        'shipping_charge' => $shippingCharge,
+                        'grand_total' => $grandTotal,
+                    ]);
+                }
 
             public function updateQuantity(int $userId, int $productId, int $quantity)
 {
@@ -133,6 +161,57 @@ public function clearCart(int $userId)
     return $this->cartRepository->clearCart($cart);
 }
 
+public function applyCoupon(int $userId, string $code)
+{
+    $cart = $this->cartRepository->getCartWithItems($userId);
 
+    if (!$cart || $cart->items->count() === 0) {
+        throw new Exception('Cart is empty');
+    }
+
+    $coupon = $this->cartRepository->findCouponByCode($code);
+
+    if (!$coupon || !$coupon->status) {
+        throw new Exception('Invalid coupon');
+    }
+
+    if (now()->lt($coupon->start_date) || now()->gt($coupon->end_date)) {
+        throw new Exception('Coupon expired or not active');
+    }
+
+    if (
+        $coupon->usage_limit &&
+        $coupon->used_count >= $coupon->usage_limit
+    ) {
+        throw new Exception('Coupon usage limit exceeded');
+    }
+
+    if ($cart->subtotal < $coupon->min_order_amount) {
+        throw new Exception('Minimum order amount not reached');
+    }
+
+    $cart->coupon_id = $coupon->id;
+    $cart->save();
+
+    $this->recalculateCart($cart);
+
+    return $this->cartRepository->getCartWithItems($userId);
+}
+
+public function removeCoupon(int $userId)
+{
+    $cart = $this->cartRepository->getCartWithItems($userId);
+
+    if (!$cart) {
+        throw new Exception('Cart not found');
+    }
+
+    $cart->coupon_id = null;
+    $cart->save();
+
+    $this->recalculateCart($cart);
+
+    return $this->cartRepository->getCartWithItems($userId);
+}
 
 }

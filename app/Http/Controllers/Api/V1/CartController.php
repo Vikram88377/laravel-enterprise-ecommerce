@@ -9,7 +9,7 @@ use App\Http\Requests\Cart\AddToCartRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Requests\Cart\UpdateCartRequest;
-
+use App\Http\Requests\Cart\ApplyCouponRequest;
 class CartController extends BaseApiController
 {
     public function __construct(
@@ -130,4 +130,57 @@ public function clear(Request $request): JsonResponse
         );
     }
 }
+
+                public function applyCoupon(
+                ApplyCouponRequest $request
+            ): JsonResponse {
+                try {
+                    $user = $request->user();
+
+                    if (!$user) {
+                        return $this->errorResponse(
+                            'Unauthenticated user. Please pass valid bearer token.',
+                            401
+                        );
+                    }
+
+                    $cart = $this->cartService->applyCoupon(
+                        $user->id,
+                        $request->code
+                    );
+
+                    return $this->successResponse(
+                        new CartResource($cart),
+                        'Coupon applied successfully'
+                    );
+
+                } catch (Exception $e) {
+                    return $this->errorResponse(
+                        $e->getMessage(),
+                        500
+                    );
+                }
+            }
+
+public function removeCoupon(Request $request): JsonResponse
+{
+    try {
+        $cart = $this->cartService->removeCoupon(
+            $request->user()->id
+        );
+
+        return $this->successResponse(
+            new CartResource($cart),
+            'Coupon removed successfully'
+        );
+
+    } catch (Exception $e) {
+        return $this->errorResponse(
+            $e->getMessage(),
+            500
+        );
+    }
+}
+
+
 }

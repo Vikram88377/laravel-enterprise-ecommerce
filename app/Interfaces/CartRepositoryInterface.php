@@ -12,7 +12,7 @@ interface CartRepositoryInterface
 
     public function updateCartItem($cartItem);
 
-    public function getCartWithItems(int $userId);
+    
 
     public function updateCartTotals($cart, array $totals);
 
