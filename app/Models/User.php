@@ -54,4 +54,21 @@ class User extends Authenticatable
              'status' => 'boolean',
         ];
     }
+
+
+        public function wishlists()
+{
+    return $this->hasMany(Wishlist::class);
+}
+
+public function cart()
+{
+    return $this->hasOne(Cart::class);
+}
+
+public function cartItems()
+{
+    return $this->hasMany(CartItem::class);
+}
+
 }
