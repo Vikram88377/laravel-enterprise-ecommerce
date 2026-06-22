@@ -7,7 +7,7 @@ use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\WishlistController;
 use App\Http\Controllers\Api\V1\OrderController;
-
+use App\Http\Controllers\Api\V1\PaymentController;
 Route::prefix('v1')->group(function () {
 
     Route::post('/register', [AuthController::class, 'register']);
@@ -44,5 +44,18 @@ Route::prefix('v1')->group(function () {
         Route::get('/orders/{id}', [OrderController::class, 'show']);
 
         Route::post('/orders/{id}/cancel',[OrderController::class, 'cancel']);
+        Route::post('/orders/{orderId}/pay/cod', [PaymentController::class, 'cod']);
+        Route::post('/orders/{orderId}/pay/razorpay', [PaymentController::class, 'razorpay']);
+        Route::post('/payments/razorpay/verify', [PaymentController::class, 'verifyRazorpay']);
+        Route::post('/razorpay/webhook', [PaymentController::class, 'razorpayWebhook']);
+
+        Route::middleware('role:super_admin|admin')->group(function () {
+
+    Route::get('/admin/orders', [OrderController::class, 'adminOrders']);
+
+    Route::patch('/admin/orders/{id}/status', [OrderController::class, 'updateStatus']);
+});
+
+
     });
 });

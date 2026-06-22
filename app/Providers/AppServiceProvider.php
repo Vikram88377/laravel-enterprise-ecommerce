@@ -15,7 +15,8 @@ use App\Interfaces\CartRepositoryInterface;
 use App\Repositories\CartRepository;
 use App\Interfaces\OrderRepositoryInterface;
 use App\Repositories\OrderRepository;
-
+use App\Interfaces\PaymentRepositoryInterface;
+use App\Repositories\PaymentRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -51,6 +52,11 @@ $this->app->bind(
 $this->app->bind(
     OrderRepositoryInterface::class,
     OrderRepository::class
+);
+
+$this->app->bind(
+    PaymentRepositoryInterface::class,
+    PaymentRepository::class
 );
 
     }

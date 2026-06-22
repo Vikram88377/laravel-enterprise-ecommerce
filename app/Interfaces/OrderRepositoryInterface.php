@@ -13,4 +13,8 @@ interface OrderRepositoryInterface
     public function findUserOrder(int $userId, int $orderId);
 
     public function findOrderWithItems(int $userId, int $orderId);
+
+    public function getAllOrders();
+
+    public function findOrderById(int $orderId);
 }

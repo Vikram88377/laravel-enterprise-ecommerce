@@ -42,5 +42,18 @@ class OrderRepository implements OrderRepositoryInterface
         ->firstOrFail();
 }
 
+        public function getAllOrders()
+{
+    return Order::with('items')
+        ->latest()
+        ->get();
+}
+
+    public function findOrderById(int $orderId)
+    {
+        return Order::with('items')
+            ->findOrFail($orderId);
+    }
+
 
 }

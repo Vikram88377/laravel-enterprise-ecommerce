@@ -11,7 +11,8 @@ use App\Interfaces\OrderRepositoryInterface;
 class OrderService
 {
     public function __construct(
-        private OrderRepositoryInterface $orderRepository
+        private OrderRepositoryInterface $orderRepository,
+        private AuditService $auditService
     ) {
     }
 
@@ -75,6 +76,17 @@ class OrderService
                 ]);
             }
 
+            $this->auditService->create(
+                'ORDER_PLACED',
+                'Order',
+                $order->id,
+                [
+                    'order_number' => $order->order_number,
+                    'grand_total' => $order->grand_total,
+                ],
+                $userId
+            );
+
             $cart->items()->delete();
 
             $cart->update([
@@ -103,43 +115,94 @@ class OrderService
         );
     }
 
+    public function cancelOrder(int $userId, int $orderId)
+    {
+        return DB::transaction(function () use ($userId, $orderId) {
 
-        public function cancelOrder(int $userId, int $orderId)
-{
-    return DB::transaction(function () use ($userId, $orderId) {
-
-        $order = $this->orderRepository->findOrderWithItems(
-            $userId,
-            $orderId
-        );
-
-        if (!in_array($order->status, ['pending', 'confirmed'])) {
-            throw new Exception(
-                'Only pending or confirmed orders can be cancelled'
+            $order = $this->orderRepository->findOrderWithItems(
+                $userId,
+                $orderId
             );
-        }
 
-        foreach ($order->items as $item) {
-
-            $product = Product::where('id', $item->product_id)
-                ->lockForUpdate()
-                ->first();
-
-            if ($product) {
-                $product->increment(
-                    'stock',
-                    $item->quantity
+            if (!in_array($order->status, ['pending', 'confirmed'])) {
+                throw new Exception(
+                    'Only pending or confirmed orders can be cancelled'
                 );
             }
-        }
 
-        $order->update([
-            'status' => 'cancelled',
-        ]);
+            foreach ($order->items as $item) {
 
-        return $order->load('items');
-    });
+                $product = Product::where('id', $item->product_id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($product) {
+                    $product->increment(
+                        'stock',
+                        $item->quantity
+                    );
+                }
+            }
+
+            $order->update([
+                'status' => 'cancelled',
+            ]);
+
+            $this->auditService->create(
+                'ORDER_CANCELLED',
+                'Order',
+                $order->id,
+                [
+                    'order_number' => $order->order_number,
+                    'status' => 'cancelled',
+                ],
+                $userId
+            );
+
+            return $order->load('items');
+        });
+    }
+
+
+    public function getAllOrders()
+{
+    return $this->orderRepository->getAllOrders();
 }
 
+public function updateOrderStatus(int $adminId, int $orderId, string $status)
+{
+    $allowedStatuses = [
+        'pending',
+        'confirmed',
+        'processing',
+        'shipped',
+        'delivered',
+        'cancelled',
+    ];
 
+    if (!in_array($status, $allowedStatuses)) {
+        throw new Exception('Invalid order status');
+    }
+
+    $order = $this->orderRepository->findOrderById($orderId);
+
+    $oldStatus = $order->status;
+
+    $order->update([
+        'status' => $status,
+    ]);
+
+    $this->auditService->create(
+        'ORDER_STATUS_UPDATED',
+        'Order',
+        $order->id,
+        [
+            'old_status' => $oldStatus,
+            'new_status' => $status,
+        ],
+        $adminId
+    );
+
+    return $order->load('items');
+}
 }

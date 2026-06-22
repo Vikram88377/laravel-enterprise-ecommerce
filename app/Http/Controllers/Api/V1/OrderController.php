@@ -7,7 +7,7 @@ use App\Services\OrderService;
 use App\Http\Resources\OrderResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-
+use App\Http\Requests\Order\UpdateOrderStatusRequest;
 class OrderController extends BaseApiController
 {
     public function __construct(
@@ -99,5 +99,45 @@ class OrderController extends BaseApiController
     }
 }
 
+        public function adminOrders(Request $request): JsonResponse
+{
+    try {
+        $orders = $this->orderService->getAllOrders();
 
+        return $this->successResponse(
+            OrderResource::collection($orders),
+            'All orders fetched successfully'
+        );
+
+    } catch (Exception $e) {
+        return $this->errorResponse(
+            $e->getMessage(),
+            500
+        );
+    }
+}
+
+public function updateStatus(
+    UpdateOrderStatusRequest $request,
+    int $id
+): JsonResponse {
+    try {
+        $order = $this->orderService->updateOrderStatus(
+            $request->user()->id,
+            $id,
+            $request->status
+        );
+
+        return $this->successResponse(
+            new OrderResource($order),
+            'Order status updated successfully'
+        );
+
+    } catch (Exception $e) {
+        return $this->errorResponse(
+            $e->getMessage(),
+            500
+        );
+    }
+}
 }
