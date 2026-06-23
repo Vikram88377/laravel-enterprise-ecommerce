@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\WishlistController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PaymentController;
+use App\Http\Controllers\Api\V1\ReportController;
 Route::prefix('v1')->group(function () {
 
     Route::post('/register', [AuthController::class, 'register']);
@@ -54,7 +55,16 @@ Route::prefix('v1')->group(function () {
     Route::get('/admin/orders', [OrderController::class, 'adminOrders']);
 
     Route::patch('/admin/orders/{id}/status', [OrderController::class, 'updateStatus']);
+
+        Route::get('/reports/sales', [ReportController::class, 'salesReport']);
+    Route::get('/reports/orders', [ReportController::class, 'ordersReport']);
+    Route::get('/reports/top-products', [ReportController::class, 'topProducts']);
+    Route::get('/reports/customers', [ReportController::class, 'customersReport']);
+
+    Route::get('/reports/monthly-sales',[ReportController::class, 'monthlySales']);
 });
+
+Route::get('/reports/dashboard-summary',[ReportController::class, 'dashboardSummary']);
 
 
     });

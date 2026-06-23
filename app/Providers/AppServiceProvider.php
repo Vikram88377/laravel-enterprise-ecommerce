@@ -19,6 +19,7 @@ use App\Interfaces\PaymentRepositoryInterface;
 use App\Repositories\PaymentRepository;
 use App\Events\OrderPlaced;
 use Illuminate\Support\Facades\Event;
+use App\Services\ReportService;
 use App\Listeners\SendOrderConfirmationListener;
 
 class AppServiceProvider extends ServiceProvider
