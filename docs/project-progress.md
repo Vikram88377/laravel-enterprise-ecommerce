@@ -178,3 +178,14 @@
 * Audit Logging
 * Payment Gateway Integration
 * Enterprise Ecommerce Design
+
+## Day 10 - Queue, Jobs, Events and Mail
+
+- Configured database queue
+- Created OrderPlaced event
+- Created SendOrderConfirmationListener
+- Created SendOrderConfirmationEmailJob
+- Dispatched job after order placement
+- Added order confirmation mail
+- Tested mail using log mail driver
+- Learned failed job retry process

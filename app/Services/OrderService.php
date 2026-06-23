@@ -7,7 +7,7 @@ use App\Models\Cart;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 use App\Interfaces\OrderRepositoryInterface;
-
+use App\Events\OrderPlaced;
 class OrderService
 {
     public function __construct(
@@ -97,6 +97,10 @@ class OrderService
                 'shipping_charge' => 0,
                 'grand_total' => 0,
             ]);
+                event(
+                new OrderPlaced($order)
+            );
+
 
             return $order->load('items');
         });

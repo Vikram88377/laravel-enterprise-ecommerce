@@ -17,6 +17,9 @@ use App\Interfaces\OrderRepositoryInterface;
 use App\Repositories\OrderRepository;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Repositories\PaymentRepository;
+use App\Events\OrderPlaced;
+use Illuminate\Support\Facades\Event;
+use App\Listeners\SendOrderConfirmationListener;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -66,6 +69,9 @@ $this->app->bind(
      */
     public function boot(): void
     {
-        //
+            Event::listen(
+        OrderPlaced::class,
+        SendOrderConfirmationListener::class
+    );
     }
 }
