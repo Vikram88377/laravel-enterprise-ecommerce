@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\WishlistController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\ReportController;
+use App\Http\Controllers\Api\V1\WalletController;
 Route::prefix('v1')->group(function () {
 
     Route::post('/register', [AuthController::class, 'register']);
@@ -49,7 +50,9 @@ Route::prefix('v1')->group(function () {
         Route::post('/orders/{orderId}/pay/razorpay', [PaymentController::class, 'razorpay']);
         Route::post('/payments/razorpay/verify', [PaymentController::class, 'verifyRazorpay']);
         Route::post('/razorpay/webhook', [PaymentController::class, 'razorpayWebhook']);
-
+        Route::get('/wallet', [WalletController::class, 'show']);
+        Route::post('/wallet/credit', [WalletController::class, 'credit']);
+        Route::post('/wallet/debit', [WalletController::class, 'debit']);  
         Route::middleware('role:super_admin|admin')->group(function () {
 
     Route::get('/admin/orders', [OrderController::class, 'adminOrders']);

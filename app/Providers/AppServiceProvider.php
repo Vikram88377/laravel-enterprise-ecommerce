@@ -20,6 +20,12 @@ use App\Repositories\PaymentRepository;
 use App\Events\OrderPlaced;
 use Illuminate\Support\Facades\Event;
 use App\Services\ReportService;
+use App\Interfaces\WalletRepositoryInterface;
+use App\Repositories\WalletRepository;
+
+
+
+
 use App\Listeners\SendOrderConfirmationListener;
 
 class AppServiceProvider extends ServiceProvider
@@ -61,6 +67,11 @@ $this->app->bind(
 $this->app->bind(
     PaymentRepositoryInterface::class,
     PaymentRepository::class
+);
+
+$this->app->bind(
+    WalletRepositoryInterface::class,
+    WalletRepository::class
 );
 
     }

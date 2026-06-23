@@ -19,6 +19,7 @@ class AuditService
             'entity_type' => $entityType,
             'entity_id' => $entityId,
             'metadata' => $metadata,
+            
         ]);
     }
 }

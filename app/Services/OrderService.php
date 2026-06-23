@@ -5,20 +5,22 @@ namespace App\Services;
 use Exception;
 use App\Models\Cart;
 use App\Models\Product;
+use App\Events\OrderPlaced;
 use Illuminate\Support\Facades\DB;
 use App\Interfaces\OrderRepositoryInterface;
-use App\Events\OrderPlaced;
+
 class OrderService
 {
     public function __construct(
         private OrderRepositoryInterface $orderRepository,
-        private AuditService $auditService
+        private AuditService $auditService,
+        private WalletService $walletService
     ) {
     }
 
-    public function placeOrder(int $userId)
+    public function placeOrder(int $userId, string $paymentMethod = 'cod')
     {
-        return DB::transaction(function () use ($userId) {
+        return DB::transaction(function () use ($userId, $paymentMethod) {
 
             $cart = Cart::with([
                 'items.product',
@@ -31,6 +33,14 @@ class OrderService
                 throw new Exception('Cart is empty');
             }
 
+            if ($paymentMethod === 'wallet') {
+                $this->walletService->debit(
+                    $userId,
+                    $cart->grand_total,
+                    'Order Payment'
+                );
+            }
+
             $order = $this->orderRepository->createOrder([
                 'user_id' => $userId,
                 'coupon_id' => $cart->coupon_id,
@@ -41,7 +51,10 @@ class OrderService
                 'shipping_charge' => $cart->shipping_charge,
                 'grand_total' => $cart->grand_total,
                 'status' => 'pending',
-                'payment_status' => 'pending',
+                'payment_status' => $paymentMethod === 'wallet'
+                    ? 'paid'
+                    : 'pending',
+                'payment_method' => $paymentMethod,
             ]);
 
             foreach ($cart->items as $item) {
@@ -83,6 +96,7 @@ class OrderService
                 [
                     'order_number' => $order->order_number,
                     'grand_total' => $order->grand_total,
+                    'payment_method' => $paymentMethod,
                 ],
                 $userId
             );
@@ -97,10 +111,10 @@ class OrderService
                 'shipping_charge' => 0,
                 'grand_total' => 0,
             ]);
-                event(
+
+            event(
                 new OrderPlaced($order)
             );
-
 
             return $order->load('items');
         });
@@ -118,95 +132,72 @@ class OrderService
             $orderId
         );
     }
-
+           
+    
+    
     public function cancelOrder(int $userId, int $orderId)
-    {
-        return DB::transaction(function () use ($userId, $orderId) {
+{
+    return DB::transaction(function () use ($userId, $orderId) {
 
-            $order = $this->orderRepository->findOrderWithItems(
-                $userId,
-                $orderId
+        $order = $this->orderRepository->findOrderWithItems(
+            $userId,
+            $orderId
+        );
+
+        if (!in_array($order->status, ['pending', 'confirmed'])) {
+            throw new Exception(
+                'Only pending or confirmed orders can be cancelled'
             );
+        }
 
-            if (!in_array($order->status, ['pending', 'confirmed'])) {
-                throw new Exception(
-                    'Only pending or confirmed orders can be cancelled'
+        foreach ($order->items as $item) {
+
+            $product = Product::where('id', $item->product_id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($product) {
+                $product->increment(
+                    'stock',
+                    $item->quantity
                 );
             }
+        }
 
-            foreach ($order->items as $item) {
+        $order->update([
+            'status' => 'cancelled',
+        ]);
 
-                $product = Product::where('id', $item->product_id)
-                    ->lockForUpdate()
-                    ->first();
-
-                if ($product) {
-                    $product->increment(
-                        'stock',
-                        $item->quantity
-                    );
-                }
-            }
-
-            $order->update([
-                'status' => 'cancelled',
-            ]);
-
-            $this->auditService->create(
-                'ORDER_CANCELLED',
-                'Order',
-                $order->id,
-                [
-                    'order_number' => $order->order_number,
-                    'status' => 'cancelled',
-                ],
-                $userId
+        if (
+            $order->payment_method === 'wallet' &&
+            $order->payment_status === 'paid'
+        ) {
+            $this->walletService->credit(
+                $userId,
+                $order->grand_total,
+                'Wallet refund for cancelled order'
             );
 
-            return $order->load('items');
-        });
-    }
+            $order->update([
+                'payment_status' => 'refunded',
+            ]);
+        }
 
+        $this->auditService->create(
+            'ORDER_CANCELLED',
+            'Order',
+            $order->id,
+            [
+                'order_number' => $order->order_number,
+                'status' => 'cancelled',
+                'payment_method' => $order->payment_method,
+                'payment_status' => $order->payment_status,
+            ],
+            $userId
+        );
 
-    public function getAllOrders()
-{
-    return $this->orderRepository->getAllOrders();
+        return $order->load('items');
+    });
 }
-
-public function updateOrderStatus(int $adminId, int $orderId, string $status)
-{
-    $allowedStatuses = [
-        'pending',
-        'confirmed',
-        'processing',
-        'shipped',
-        'delivered',
-        'cancelled',
-    ];
-
-    if (!in_array($status, $allowedStatuses)) {
-        throw new Exception('Invalid order status');
-    }
-
-    $order = $this->orderRepository->findOrderById($orderId);
-
-    $oldStatus = $order->status;
-
-    $order->update([
-        'status' => $status,
-    ]);
-
-    $this->auditService->create(
-        'ORDER_STATUS_UPDATED',
-        'Order',
-        $order->id,
-        [
-            'old_status' => $oldStatus,
-            'new_status' => $status,
-        ],
-        $adminId
-    );
-
-    return $order->load('items');
-}
+   
 }
