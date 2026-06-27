@@ -60,13 +60,15 @@
                                         </a>
                                                         </li>
 
-                        <li class="nav-item">
-                            <a href="{{ route('admin.reports.index') }}"
-                            class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
-                                <i class="nav-icon fas fa-chart-bar"></i>
-                                <p>Reports</p>
-                            </a>
-                        </li>
+                    @can('view-reports')
+                    <li class="nav-item">
+                        <a href="{{ route('admin.reports.index') }}"
+                        class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-chart-bar"></i>
+                            <p>Reports</p>
+                        </a>
+                    </li>
+                    @endcan
 
                 <li class="nav-item">
     <a href="{{ route('admin.audit-logs.index') }}"
@@ -76,6 +78,39 @@
     </a>
 </li>
 
+            @can('view-users')
+            <li class="nav-item">
+                <a href="{{ route('admin.users.index') }}"
+                class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                    <i class="nav-icon fas fa-users"></i>
+                    <p>Users</p>
+                </a>
+            </li>
+            @endcan
+                <li class="nav-item">
+    <a href="{{ route('admin.roles.index') }}"
+       class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
+        <i class="nav-icon fas fa-user-shield"></i>
+        <p>Roles</p>
+    </a>
+</li>
+
+            <li class="nav-item">
+                <a href="{{ route('admin.permissions.index') }}"
+                class="nav-link {{ request()->routeIs('admin.permissions.*') ? 'active' : '' }}">
+                    <i class="nav-icon fas fa-key"></i>
+                    <p>Permissions</p>
+                </a>
+            </li>
+                        <li class="nav-item">
+    <form action="{{ route('logout') }}" method="POST">
+        @csrf
+
+        <button type="submit" class="btn btn-link nav-link">
+            Logout
+        </button>
+    </form>
+</li>
             </ul>
 
         </nav>

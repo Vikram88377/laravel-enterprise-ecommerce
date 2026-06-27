@@ -10,6 +10,11 @@ use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\ProfilesController;
+
 Route::middleware([
     'auth',
     'role:super_admin|admin'
@@ -62,6 +67,39 @@ Route::get('/payments', [PaymentController::class, 'index'])
     Route::get('/reports', [ReportController::class, 'index'])
     ->name('reports.index');
 
+        Route::resource('users', UserController::class);
+            Route::resource('roles', RoleController::class);
+            Route::resource('permissions', PermissionController::class);
+            Route::get(
+    '/roles/{role}/permissions',
+    [RoleController::class, 'permissions']
+)->name('roles.permissions');
+
+Route::post(
+    '/roles/{role}/permissions',
+    [RoleController::class, 'syncPermissions']
+)->name('roles.permissions.sync');
+
+        Route::resource('users', UserController::class)
+    ->middleware('permission:view-users');
+
+Route::resource('products', ProductController::class)
+    ->middleware('permission:view-products');
+
+Route::get('/reports', [ReportController::class, 'index'])
+    ->name('reports.index')
+    ->middleware('permission:view-reports');
+
+
+
+    Route::get('/profile', [ProfilesController::class, 'edit'])
+    ->name('profile.edit');
+
+Route::put('/profile', [ProfilesController::class, 'update'])
+    ->name('profile.update');
+
+Route::put('/profile/password', [ProfilesController::class, 'updatePassword'])
+    ->name('profile.password');
 });
 
 

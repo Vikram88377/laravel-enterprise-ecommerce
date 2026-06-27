@@ -14,6 +14,9 @@
                 {{ auth()->user()->name ?? 'Admin' }}
             </span>
         </li>
+        <a href="{{ route('admin.profile.edit') }}" class="nav-link">
+    Profile
+</a>
     </ul>
 
 </nav>

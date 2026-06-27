@@ -22,7 +22,8 @@ use Illuminate\Support\Facades\Event;
 use App\Services\ReportService;
 use App\Interfaces\WalletRepositoryInterface;
 use App\Repositories\WalletRepository;
-
+use App\Interfaces\UserRepositoryInterface;
+use App\Repositories\UserRepository;
 
 
 
@@ -72,6 +73,11 @@ $this->app->bind(
 $this->app->bind(
     WalletRepositoryInterface::class,
     WalletRepository::class
+);
+
+    $this->app->bind(
+    UserRepositoryInterface::class,
+    UserRepository::class
 );
 
     }
